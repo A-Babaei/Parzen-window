@@ -1,0 +1,39 @@
+clc; clear; close all;
+% A.Babaei
+% Parzen window smoothing to an estimate.
+
+function [smoothed_est] = apply_parzen_window(est, U, N, gamma)
+
+%   Inputs:
+%   est - Original estimate (e.g., ETFE)
+%   U - FFT of the input signal
+%   N - Length of the signal
+%   gamma - Window size for Parzen window
+%   Output:
+%   smoothed_est - Smoothed estimate using Parzen window
+
+% Create Parzen window
+p = parzenwin(gamma)';
+
+% Prepare the weight vector
+pad = zeros(1, N-gamma);
+weight = [p(1, gamma/2+1:gamma) pad p(1, 1:gamma/2)];
+
+% Initialize smoothed estimate components
+estgn = zeros(1, N);
+estgd = zeros(1, N);
+
+% Apply circular shift and compute weighted sum
+for j = 1:N
+    cirw = circshift(weight, j);
+    for k = 1:N
+        U2 = abs(U(k)).^2;
+        estgn(j) = estgn(j) + cirw(k) * U2 * est(k);
+        estgd(j) = estgd(j) + cirw(k) * U2;
+    end
+end
+
+% Compute the smoothed estimate
+smoothed_est = estgn ./ estgd;
+
+end
